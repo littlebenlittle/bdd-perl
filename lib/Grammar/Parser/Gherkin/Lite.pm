@@ -19,7 +19,7 @@ my $features = [];
 sub new {
   my $class    = shift;
   my $filepath = shift;
-  my $self  = Grammar::Parser->new($filepath);
+  my $self  = Grammar::Parser->new('BEGIN');
 
   $self->register( 'BEGIN' => sub {
     my ($ctx, $line) = @_;

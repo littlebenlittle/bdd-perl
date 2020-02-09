@@ -5,22 +5,26 @@ use 5.10.1;
 package Grammar::Parser;
 
 sub new {
-  my $class = shift;
-  return bless {}, $class;
+  my ($class, $init_state) = @_;
+  bless {
+    init_state => $init_state,
+    handlers   => {},
+  }, $class;
 }
 
 sub register {
   my ($self, $state, $handler) = @_;
-  say $state;
+  $self->{handlers}->{$state} = $handler;
 }
 
 sub parse {
   my ($self, $filepath) = @_;
-  open my $fh, '<', $filepath or die $! . " $filepath";
-  while ( <$fh> ) {
-    chomp;
-    say;
-  }
+  open my $fh, '<', $filepath
+    or die "Cannot open $filepath: $!";
+  my $state = $self->{init_state};
+  my $ctx   = {};
+  $self->{handlers}->{$state}( $ctx, $_ )
+    while <$fh>;
 }
 
 1;
