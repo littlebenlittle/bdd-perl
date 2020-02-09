@@ -1,6 +1,5 @@
 use strict;
 use warnings;
-use 5.10.1;
 
 package Grammar::Parser;
 
@@ -22,9 +21,14 @@ sub parse {
   open my $fh, '<', $filepath
     or die "Cannot open $filepath: $!";
   my $state = $self->{init_state};
-  my $ctx   = {};
-  $self->{handlers}->{$state}( $ctx, $_ )
-    while <$fh>;
+  my $ctx   = {
+    undefined => [],
+  };
+  while ( <$fh> ) {
+    print $_;
+    $state = $self->{handlers}->{$state}( $ctx, $_ );
+    print $state . '|';
+  }
 }
 
 1;
