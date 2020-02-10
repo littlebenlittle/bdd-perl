@@ -22,8 +22,7 @@ sub _push_step_context {
 sub _push_scenario_context {
   my ($ctx, $name) = @_;
   my $scenario = Grammar::Gherkin::Model::Scenario->new( $name );
-  my @scenarios = @{ $ctx->{feature}->{scenarios} };
-  push @scenarios, \$scenario;
+  push @{ $ctx->{feature}->{scenarios} }, \$scenario;
   $ctx->{feature}->{scenario} = $scenario;
   $ctx->{scenario} = $scenario;
 }
@@ -149,6 +148,12 @@ sub new {
   });
 
   bless $self, $class;
+}
+
+sub after {
+    my ($self, $ctx) = @_;
+    say "Undefined steps:";
+    say @$_[0] . ' ' . @$_[1] for @{ $ctx->{undefined} };
 }
 
 1;

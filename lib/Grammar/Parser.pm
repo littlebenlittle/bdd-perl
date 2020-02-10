@@ -16,6 +16,8 @@ sub register {
   $self->{handlers}->{$state} = $handler;
 }
 
+sub after {};
+
 sub parse {
   my ($self, $filepath) = @_;
   open my $fh, '<', $filepath
@@ -30,8 +32,9 @@ sub parse {
     die "Unregistered state $state"
       unless $handler;
     $state = &$handler( $ctx, $_ );
-    print $state . '|';
+    # print $state . '|';
   }
+  $self->after( $ctx );
 }
 
 1;

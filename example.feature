@@ -14,5 +14,5 @@ Feature: A feature about things
   
   Scenario: The second scenario
     When  I scream
-    Then  I get ics cream
+    Then  I get ice cream
   
