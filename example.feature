@@ -12,3 +12,7 @@ Feature: A feature about things
     When  I shoot rainbows
     Then  there should be glitter everywhere
   
+  Scenario: The second scenario
+    When  I scream
+    Then  I get ics cream
+  

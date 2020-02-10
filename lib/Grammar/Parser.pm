@@ -26,7 +26,10 @@ sub parse {
   };
   while ( <$fh> ) {
     print $_;
-    $state = $self->{handlers}->{$state}( $ctx, $_ );
+    my $handler = $self->{handlers}->{$state};
+    die "Unregistered state $state"
+      unless $handler;
+    $state = &$handler( $ctx, $_ );
     print $state . '|';
   }
 }

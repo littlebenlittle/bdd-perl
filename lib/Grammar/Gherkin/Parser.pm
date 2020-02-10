@@ -9,13 +9,23 @@ use Grammar::Gherkin::Model::Feature;
 use Grammar::Gherkin::Model::Scenario;
 use BDD::Gherkin::Definitions;
 
-sub _load_step {
+sub _push_step_context {
   my ($self, $ctx, $kw, $arg) = @_;
+  die "Blank follows keyword"
+    unless $arg;
   my $def = $self->{definitions}->match( $kw, $arg );
   push @{ $ctx->{undefined} }, [$kw, $arg]
     unless $def;
-  push @{ $ctx->{scenario}->{steps} }, $def ;
-  return uc $kw;
+  push @{ $ctx->{scenario}->{steps} }, $def;
+}
+
+sub _push_scenario_context {
+  my ($ctx, $name) = @_;
+  my $scenario = Grammar::Gherkin::Model::Scenario->new( $name );
+  my @scenarios = @{ $ctx->{feature}->{scenarios} };
+  push @scenarios, \$scenario;
+  $ctx->{feature}->{scenario} = $scenario;
+  $ctx->{scenario} = $scenario;
 }
 
 sub new {
@@ -43,16 +53,12 @@ sub new {
     if ($line =~ m/Background:\s*(.*)/) {
         die "Feature " . $feature->name . " already has a Background"
           if $feature->{background};
-        my $bg = Grammar::Gherkin::Model::Scenario->new( $1 );
-        $ctx->{feature}->{background} = $bg;
-        $ctx->{scenario} = $bg;
+        _push_scenario_context( $ctx, $1 );
+        $ctx->{feature}->{background} = $ctx->{scenario};
         return 'BACKGROUND';
     }
     if ($line =~ m/Scenario:\s*(.*)/) {
-        my $scenario = Grammar::Gherkin::Model::Scenario->new( $1 );
-        push @{ $ctx->{feature}->{scenarios} }, \$scenario;
-        $ctx->{feature}->{scenario} = $scenario;
-        $ctx->{scenario} = $scenario;
+        _push_scenario_context( $ctx, $1 );
         return 'SCENARIO';
     }
     $feature->{description} .= $line;
@@ -61,8 +67,10 @@ sub new {
 
   $self->register( 'BACKGROUND' => sub {
     my ($ctx, $line) = @_;
-    if ($line =~ m/\s*Given\s*(.*)/) {
-        _load_step( $self, $ctx, 'Given', $1 );
+    my $kw = 'Given';
+    if ($line =~ m/\s*$kw\s*(.*)/) {
+        _push_step_context( $self, $ctx, 'Given', $1 );
+        return uc $kw;
     }
     $ctx->{scenario}->{description} .= $line;
     return 'FEATURE';
@@ -72,22 +80,73 @@ sub new {
     my ($ctx, $line) = @_;
     my $feature  = $ctx->{feature};
     if ($line =~ m/\s*(Given|When|Then)\s*(.*)/) {
-        return _load_step( $self, $ctx, $1, $2 );
+        _push_step_context( $self, $ctx, $1, $2 );
+        return uc $1;
     }
     $ctx->{scenario}->{description} .= $line;
     return 'SCENARIO';
   });
 
-  $self->register( uc $_, sub {
-    my ($ctx, $line) = @_;
-    my $scenario = $ctx->{scenario};
-    my $kw = ucfirst $_;
-    if ($line =~ m/\s*(Given|And|But|When|Then)\s*(.*)/) {
-        $1 =~ s/And|But/$kw/;
-        return _load_step( $self, $ctx, $1, $2 );
-    }
-    return 'WHEN';
-  }) for qw(Given When Then);
+  $self->register( 'GIVEN' => sub {
+      my ($ctx, $line) = @_;
+      my $base_kw = 'Given';
+      return uc $base_kw if $line =~ m/^\s*$/;
+      if ($line =~ m/\s*($base_kw|And|But)\s\s*(.*)/) {
+          my $kw  = $1;
+          my $arg = $2;
+          $kw =~ s/And|But/$base_kw/;
+          _push_step_context( $self, $ctx, $kw, $arg );
+          return uc $kw;
+      }
+      if ($ctx->{scenario} eq $ctx->{feature}->{background}) {
+          if ($line =~ m/Scenario:\s*(.*)/ ) {
+              _push_scenario_context( $ctx, $1 );
+              return 'SCENARIO';
+          }
+      } elsif ($line =~ m/(When|Then)\s\s*(.*)/) {
+          my $kw  = $1;
+          my $arg = $2;
+          _push_step_context( $self, $ctx, $kw, $arg );
+          return uc $kw;
+      }
+      return 'HALT';
+  });
+
+  $self->register( 'WHEN' => sub {
+      my ($ctx, $line) = @_;
+      my $base_kw = 'When';
+      return uc $base_kw if $line =~ m/^\s*$/;
+      if ($line =~ m/\s*($base_kw|And|But)\s\s*(.*)/) {
+          my $kw  = $1;
+          my $arg = $2;
+          $kw =~ s/And|But/$base_kw/;
+          _push_step_context( $self, $ctx, $kw, $arg );
+          return uc $kw;
+      }
+      if ($line =~ m/\s*(Then|And|But)\s\s*(.*)/) {
+          _push_step_context( $self, $ctx, 'Then', $2 );
+          return 'THEN';
+      }
+      return 'HALT';
+  });
+
+  $self->register( 'THEN' => sub {
+      my ($ctx, $line) = @_;
+      my $base_kw = 'Then';
+      return uc $base_kw if $line =~ m/^\s*$/;
+      if ($line =~ m/\s*($base_kw|And|But)\s\s*(.*)/) {
+          my $kw  = $1;
+          my $arg = $2;
+          $kw =~ s/And|But/$base_kw/;
+          _push_step_context( $self, $ctx, $kw, $arg );
+          return uc $kw;
+      }
+      if ($line =~ m/Scenario:\s*(.*)/ ) {
+          _push_scenario_context( $ctx, $1 );
+          return 'SCENARIO';
+      }
+      return 'HALT';
+  });
 
   bless $self, $class;
 }
