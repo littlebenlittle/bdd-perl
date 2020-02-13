@@ -4,9 +4,11 @@ use warnings;
 package BDD::Gherkin::Definitions;
 
 sub new {
-  my ($class, $init_state) = @_;
-  my $self = {};
-  bless $self, $class;
+    my ($class, $definitions, $runner) = @_;
+    my $self = {};
+    $self->{runner} = $runner;
+    $runner->load( $_ ) for @$definitions;
+    bless $self, $class;
 }
 
 sub match {
