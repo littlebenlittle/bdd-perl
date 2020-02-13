@@ -5,12 +5,8 @@ use 5.10.0;
 package BDD::Runner;
 use BDD::Model::Step;
 
-my $singleton;
-
-sub get_runner {
-    $singleton = bless { steps => [] }, shift
-      unless $singleton;
-    $singleton;
+sub new {
+    bless { steps => [] }, shift;
 }
 
 sub run {

@@ -5,14 +5,14 @@ use 5.10.0;
 package BDD::Runner::Perl;
 use parent 'BDD::Runner';
 
-sub get_runner {
-    my $class = shift;
-    my $self = BDD::Runner->get_runner;
-    bless $self, $class;
+sub new {
+    my $self = BDD::Runner->new;
+    bless $self, shift;
 }
 
 sub load {
-    die unless eval { require $_; };
+    my ($self, $step_file) = @_;
+    die unless eval { require $step_file; };
 }
 
 sub register {
