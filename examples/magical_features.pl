@@ -22,6 +22,9 @@ register('Given', qr/there is (.*)/, sub {
 });
 
 register('When', qr/I shoot rainbows/, sub {
+    die 'Only unicorns can shoot rainbows'
+      unless $ctx->{iam}
+         and $ctx->{iam} eq 'a unicorn';
     say 'Pew Pew!! 🌈🌈🌈';
     $ctx->{glitter} = 'everywhere';
 });

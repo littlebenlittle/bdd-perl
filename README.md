@@ -1,14 +1,12 @@
 
-# Grammar::Parse
+# BDD Testing
 
-*Unstable API*
-
-Library for build parsers for formal grammars.
+Parses a `.feature` file and runs associated step definitions.
 
 ## Use
 
-    docker build -t parser .
     docker run -it --rm -u $(id -u) \
         -w /usr/src/bdd \
         -v $(pwd):/usr/src/bdd \
-        parser example.feature
+        benlittle6/bdd-perl <your feature file>
+
