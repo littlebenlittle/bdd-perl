@@ -6,15 +6,24 @@ use Grammar::Gherkin::Parser;
 use BDD::Runner::Perl;
 
 use Cwd;
+use Util qw( get_files );
 
 my $feature_dir = getcwd . '/features/';
 my $step_dir = $feature_dir . 'step_definitions/';
 my $runner = BDD::Runner::Perl->new;
-opendir my $dh, $step_dir or die "Can't open dir $step_dir: $!";
-while (readdir $dh) {
-    next if $_ =~ m/^\.\.?$/;
-    my $step_file = $step_dir . $_;
-    $runner->load( $step_file );
+my $parser = Grammar::Gherkin::Parser->new;
+
+for (get_files $step_dir) {
+    next unless $_ =~ m/^\w\w*\.pl$/;
+    $runner->load( $step_dir . $_ );
 }
-closedir $dh;
+for (get_files $feature_dir) {
+    next unless $_ =~ m/^\w\w*\.feature$/;
+    $parser->parse( $feature_dir . $_ );
+}
+
+my @features = @{ $parser->{features} };
+die "No feature files found in $feature_dir"
+  if @features == 0;
+runner->run_feature( $_ ) for @features;
 
