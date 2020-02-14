@@ -12,7 +12,7 @@ sub _push_step_context {
     my ($self, $ctx, $kw, $arg) = @_;
     die 'Blank follows keyword'
       unless $arg;
-    my $step = $self->{runner}->compile_step( $kw, $arg );
+    my $step = [$kw, $arg];
     push @{ $ctx->{undefined} }, [$kw, $arg]
       unless $step;
     push @{ $ctx->{scenario}->{steps} }, $step;
@@ -27,12 +27,7 @@ sub _push_scenario_context {
 }
 
 sub new {
-    my ($class, $runner) = @_;
-    my $self = Grammar::Parser->new('BEGIN');
-
-    die "$runner is not a BDD::Runner"
-      unless $runner->isa( 'BDD::Runner' );
-    $self->{runner}   = $runner;
+    my $self  = Grammar::Parser->new('BEGIN');
     $self->{features} = [];
 
     $self->register( 'BEGIN' => sub {
@@ -109,7 +104,7 @@ sub new {
             _push_step_context( $self, $ctx, $kw, $arg );
             return uc $kw;
         }
-        return 'HALT';
+        return "Unrecognized line in GIVEN context: $line";
     });
 
     $self->register( 'WHEN' => sub {
@@ -148,7 +143,7 @@ sub new {
         return 'HALT';
     });
 
-    bless $self, $class;
+    bless $self, shift;
 }
 
 sub before {
@@ -156,21 +151,6 @@ sub before {
     $ctx = {
       undefined => [],
     };
-}
-
-sub run_scenario {
-    my ($self, $scenario) = @_;
-    $_->run for @{ $scenario->{steps} };
-}
-
-sub after {
-    my ($self, $ctx) = @_;
-    if ($ctx->{undefined} and @{ $ctx->{undefined} } != 0) {
-        say "Undefined steps:";
-        say join ' ', @$_ for @{ $ctx->{undefined} } ;
-        die 'There are undefined steps; see above';
-    }
-    $self->run_scenario( $_ ) for @{ $ctx->{feature}->{scenarios} };
 }
 
 1;
