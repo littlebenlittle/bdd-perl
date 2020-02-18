@@ -41,8 +41,8 @@ sub can_run {
 }
 
 sub load {
-	# my ($self, $step_file) = @_;
-	# die unless eval { require $step_file; };
+	my ($self, $step_file) = @_;
+	require $step_file;
 }
 
 sub register {
