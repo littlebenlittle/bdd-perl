@@ -3,62 +3,34 @@ use warnings;
 use 5.10.0;
 
 use Test::More;
+use Test::Exception;
 use Util qw( get_files );
 
-use BDD::Runner::Perl;
-use Grammar::Gherkin::Model::Step;
+use BDD::Perl::Runner;
 
-my $runner = BDD::Runner::Perl->get_instance;
+my $runner = BDD::Perl::Runner->get_instance;
 
-do {
-    my $name = 'Perl Runner is a singleton';
-    my $runnerB = BDD::Runner::Perl->get_instance;
-    is_deeply $runner, $runnerB, $name;
-};
+is_deeply $runner, BDD::Perl::Runner->get_instance,
+  'Perl Runner is a singleton';
 
-do {
-    $runner->register(qr/This is a step/, sub {
-        "OK";
-    });
-    my $step = Grammar::Gherkin::Model::Step->new( 'This is a step' );
-    my $step_binding = $runner->compile_step( $step );
-    ok defined $step, 'Basic step match';
-    is $step_binding->run, "OK", 'Can run step';
-};
+throws_ok { $runner->run('some arg') } qr/Runner has no registered definitions/,
+  'Cannot run anything on a runner with no registered definitions';
 
-do {
-    my $name = 'Step without matching definition cannot be compiled';
-    my $step = Grammar::Gherkin::Model::Step->new( 'This is not a step' );
-    my $step_binding = $runner->compile_step( $step );
-    ok not (defined $step_binding), $name;
-};
+$runner->register(qr/SAYOK/, sub { 'OK'; });
+is $runner->run('SAYOK'), 'OK',
+  'Can run step';
 
-do {
-    my $name = 'Step match with regex';
-    $runner->register(qr/fruit: (.*)/, sub {
-        $1;
-    });
-    my $step = Grammar::Gherkin::Model::Step->new( 'fruit: orange' );
-    my $step_binding = $runner->compile_step( $step );
-    ok defined $step, $name;
-};
+ok not $runner->can_run('No matching definitions'),
+  'Step without matching definition cannot be run';
 
-do {
-    my $name = 'Run definition using arg from regex match';
-    my $step = Grammar::Gherkin::Model::Step->new( 'fruit: orange' );
-    my $step_binding = $runner->compile_step( $step );
-    is $step_binding->run, "orange", $name;
-};
+$runner->register(qr/ECHO (.*)/, sub { $1; });
+is $runner->run('ECHO my argument'), 'my argument',
+   'Runner can return arg from regex match';
 
-do {
-    my $name = 'Step definitions can access the context object';
-    $runner->{ctx}->{data} = 'OK';
-    $runner->register('BEGIN', qr/.*/, sub {
-        my $ctx = shift;
-        $ctx->{data};
-
-    });
-};
+$runner->{ctx}->{somedata} = 'my data';
+$runner->register(qr/CONTEXT/, sub { $_->{somedata}; });
+is $runner->run('CONTEXT'), 'my data',
+   'Step definitions can access runner\'s context';
 
 done_testing();
 
