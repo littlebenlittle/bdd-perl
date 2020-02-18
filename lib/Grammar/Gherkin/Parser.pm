@@ -5,8 +5,8 @@ use 5.10.0;
 package Grammar::Gherkin::Parser;
 use parent 'Grammar::Parser';
 
-use Grammar::Gherkin::Model::Feature;
-use Grammar::Gherkin::Model::Scenario;
+use Grammar::Gherkin::Feature;
+use Grammar::Gherkin::Scenario;
 
 sub _push_step_context {
     my ($self, $ctx, $kw, $arg) = @_;

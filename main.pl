@@ -3,14 +3,14 @@ use warnings;
 use 5.10.0;
 
 use Grammar::Gherkin::Parser;
-use BDD::Runner::Perl;
+use BDD::Perl::Runner;
 
 use Cwd;
 use Util qw( get_files );
 
 my $feature_dir = getcwd . '/features/';
 my $step_dir = $feature_dir . 'step_definitions/';
-my $runner = BDD::Runner::Perl->new;
+my $runner = BDD::Perl::Runner->get_instance;
 my $parser = Grammar::Gherkin::Parser->new;
 
 for (get_files $step_dir) {
