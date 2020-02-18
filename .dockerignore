@@ -2,3 +2,7 @@ tmp/
 examples/
 .gitignore
 features/
+tests/
+.dockerignore
+Dockerfile
+

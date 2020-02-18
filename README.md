@@ -30,6 +30,6 @@ To run the feature tests in `./features`, run the following from the root of the
     docker run -it --rm -u $(id -u) \
         --workdir /work \
         --volume  $(pwd):/work \
-        --volume  /path/to/perl-bdd:/usr/src/bdd \
+        --volume  <path to bdd-perl>:/usr/src/bdd \
         benlittle6/bdd-perl
 
