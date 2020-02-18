@@ -4,7 +4,7 @@ use 5.10.0;
 
 use Test::More;
 use Test::Exception;
-use Util qw( get_files );
+use File::Temp qw( tempfile );
 
 use BDD::Perl::Runner;
 
@@ -41,6 +41,21 @@ $runner->register(qr/CONTEXT/, sub { $runner->{ctx}->{somedata}; });
 $runner->{ctx}->{somedata} = 'my data';
 is $runner->run('CONTEXT'), 'my data',
 'Step definitions can access runner\'s context';
+
+my ($fh, $filename) = tempfile();
+print $fh <<EOF;
+use BDD::Perl::Runner;
+my \$runner = BDD::Perl::Runner->get_instance;
+\$runner->register( qr/LOADFILE/, sub { 'OK'; });
+1;
+EOF
+<$fh>;
+throws_ok { $runner->run('LOADFILE') } qr/No match found for .*/,
+'Runner can\'t run step definitions from file before file is loaded';
+
+$runner->load($filename);
+is( $runner->run('LOADFILE'), 'OK',
+'Runner can run definitions from file after file is loaded');
 
 done_testing();
 
