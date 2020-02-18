@@ -13,11 +13,11 @@ my $step_dir = $feature_dir . 'step_definitions/';
 my $runner = BDD::Perl::Runner->get_instance;
 my $parser = Grammar::Gherkin::Parser->new;
 
-for (get_files $step_dir) {
+for (get_files_from_dirpath $step_dir) {
     next unless $_ =~ m/^\w\w*\.pl$/;
     $runner->load( $step_dir . $_ );
 }
-for (get_files $feature_dir) {
+for (get_files_from_dirpath $feature_dir) {
     next unless $_ =~ m/^\w\w*\.feature$/;
     $parser->parse( $feature_dir . $_ );
 }
